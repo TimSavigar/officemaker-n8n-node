@@ -1,17 +1,41 @@
-const DEFAULT_BASE_URL = 'https://free.officemaker.ai';
+const DEFAULT_FREE_BASE_URL = 'https://free.officemaker.ai';
+const DEFAULT_PAID_BASE_URL = 'https://docs.officemaker.ai';
 
-function getBaseUrl() {
-  return String(process.env.OFFICEMAKER_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
+function getConfig() {
+  const tier = String(process.env.OFFICEMAKER_API_TIER || 'free').toLowerCase() === 'paid' ? 'paid' : 'free';
+  const baseUrl = String(process.env.OFFICEMAKER_BASE_URL || (tier === 'paid' ? DEFAULT_PAID_BASE_URL : DEFAULT_FREE_BASE_URL)).replace(/\/+$/, '');
+
+  return {
+    tier,
+    baseUrl,
+    authToken: process.env.OFFICEMAKER_AUTH_TOKEN || '',
+    userApiKey: process.env.OFFICEMAKER_USER_API_KEY || ''
+  };
+}
+
+function buildHeaders({ accept = 'application/json' } = {}) {
+  const { authToken, userApiKey } = getConfig();
+  const headers = {
+    Accept: accept,
+    'Content-Type': 'application/json',
+    'User-Agent': 'officemaker-starter/0.2.0'
+  };
+
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+  if (userApiKey) {
+    headers['X-Document-Service-User-Api-Key'] = userApiKey;
+  }
+
+  return headers;
 }
 
 async function requestJson(path, { method = 'GET', body } = {}) {
-  const response = await fetch(`${getBaseUrl()}${path}`, {
+  const { baseUrl } = getConfig();
+  const response = await fetch(`${baseUrl}${path}`, {
     method,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': 'officemaker-n8n-node-starter/0.1.0'
-    },
+    headers: buildHeaders(),
     body: body ? JSON.stringify(body) : undefined
   });
 
@@ -32,9 +56,11 @@ async function requestJson(path, { method = 'GET', body } = {}) {
 }
 
 export async function getDocumentSchema(documentType, format = 'markdown') {
+  const { tier, baseUrl } = getConfig();
   const params = new URLSearchParams({ documentType, format });
-  const response = await fetch(`${getBaseUrl()}/gpt/v1/schema?${params.toString()}`, {
-    headers: { Accept: format === 'markdown' ? 'text/markdown' : 'application/json' }
+  const schemaPath = tier === 'paid' ? '/schema' : '/gpt/v1/schema';
+  const response = await fetch(`${baseUrl}${schemaPath}?${params.toString()}`, {
+    headers: buildHeaders({ accept: format === 'markdown' ? 'text/markdown' : 'application/json' })
   });
 
   const text = await response.text();
@@ -46,25 +72,41 @@ export async function getDocumentSchema(documentType, format = 'markdown') {
 }
 
 export async function createDocument({ documentType, fileName, documentObject, generatePdf = false }) {
-  return requestJson('/gpt/v1/create-document', {
+  const { tier } = getConfig();
+  return requestJson(tier === 'paid' ? '/createDocument' : '/gpt/v1/create-document', {
     method: 'POST',
-    body: {
-      document_type: documentType,
-      file_name: fileName,
-      document_json: JSON.stringify(documentObject),
-      generate_pdf: generatePdf
-    }
+    body:
+      tier === 'paid'
+        ? {
+            documentType,
+            fileName,
+            documentJson: documentObject,
+            generatePdf
+          }
+        : {
+            document_type: documentType,
+            file_name: fileName,
+            document_json: JSON.stringify(documentObject),
+            generate_pdf: generatePdf
+          }
   });
 }
 
 export async function createPreview({ documentKey, documentType, maxPreviewPages = 2 }) {
-  return requestJson('/gpt/v1/create-preview', {
+  const { tier } = getConfig();
+  return requestJson(tier === 'paid' ? '/createPreview' : '/gpt/v1/create-preview', {
     method: 'POST',
-    body: {
-      document_key: documentKey,
-      document_type: documentType,
-      max_preview_pages: maxPreviewPages
-    }
+    body:
+      tier === 'paid'
+        ? {
+            documentKey,
+            documentType
+          }
+        : {
+            document_key: documentKey,
+            document_type: documentType,
+            max_preview_pages: maxPreviewPages
+          }
   });
 }
 
