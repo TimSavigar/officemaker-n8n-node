@@ -1,0 +1,41 @@
+{
+  "name": "OfficeMaker Create AI Letter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manualTrigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://free.officemaker.ai/gpt/v1/create-document",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"document_type\": \"word\",\n  \"file_name\": \"n8n-ai-letter\",\n  \"document_json\": JSON.stringify({\n    type: \"document\",\n    content: {\n      children: [\n        { type: \"paragraph\", children: [{ type: \"text\", text: \"Dear Customer,\" }] },\n        { type: \"paragraph\", children: [{ type: \"text\", text: \"This letter was created by the OfficeMaker starter n8n workflow.\" }] },\n        { type: \"paragraph\", children: [{ type: \"text\", text: \"Kind regards,\" }] },\n        { type: \"paragraph\", children: [{ type: \"text\", text: \"OfficeMaker\" }] }\n      ]\n    }\n  })\n}",
+        "options": {}
+      },
+      "id": "createDocument",
+      "name": "Create Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 280]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
