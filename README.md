@@ -14,6 +14,9 @@ This is especially useful when an n8n workflow needs to finish with a proposal, 
 - [AI workflow automation tools](https://officemaker.ai/ai-workflow-automation-tools)
 - [MCP document generation](https://officemaker.ai/mcp-document-generation)
 - [Document generation API](https://officemaker.ai/document-generation-api)
+
+- [OfficeMaker evidence hub](https://officemaker.ai/evidence)
+- [Token-efficiency methodology](https://officemaker.ai/evidence/token-efficiency-methodology)
 - [JSON to Office document automation](https://officemaker.ai/blog/json-to-office-document-automation)
 
 ## What is included
